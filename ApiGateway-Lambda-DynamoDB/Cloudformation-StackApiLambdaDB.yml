@@ -5,42 +5,42 @@ Resources:
     Properties:
       Code:
         ZipFile: |
-          console.log('Loading DynamoDB Lambda Function');
-          var aws = require('aws-sdk');
+          console.log('Loading DynamoDB Lambda function');
+          var AWS = require('aws-sdk');
           var dynamo = new AWS.DynamoDB.DocumentClient();
-          export.handler = function(event, context, callback) {
-            // console.log('Received event: ', JSON.stringify(event, null, 2));
-            var operation = event.operation;
-            if ( event.tableName) {
-              event.payload.TableName = event.tableName;
-            }
-            switch (operation) {
-              case 'create':
-                dynamo.put(event.payload, callback);
-                break;
-              case 'read':
-                dynamo.get(event.payload, callback);
-                break;
-              case 'update':
-                dynamo.update(event.payload, callback);
-                break;
-              case 'delete':
-                dynamo.delete(event.payload, callback);
-                break;
-              case 'list':
-                dynamo.scan(event.payload, callback);
-                break;
-              default:
-                callback('Unknown operation: ${operation}');
-            }
+          exports.handler = function(event, context, callback) {
+          //console.log('Received event:', JSON.stringify(event, null, 2));
+          var operation = event.operation;
+          if (event.tableName) {
+            event.payload.TableName = event.tableName;
+          }
+          switch (operation) {
+                case 'create':
+                    dynamo.put(event.payload, callback);
+                    break;
+                case 'read':
+                    dynamo.get(event.payload, callback);
+                    break;
+                case 'update':
+                    dynamo.update(event.payload, callback);
+                    break;
+                case 'delete':
+                    dynamo.delete(event.payload, callback);
+                    break;
+                case 'list':
+                    dynamo.scan(event.payload, callback);
+                    break;
+                default:
+                    callback('Unknown operation: ${operation}');
+          }
           };
       FunctionName:
         Ref: LambdaFuncName
       Handler: index.handler
       Runtime: nodejs12.x
       Role: !GetAtt IAMRole.Arn
-      DependsOn:
-        - DynamoDBTable
+    DependsOn:
+      - DynamoDBTable
   DynamoDBTable:
     Type: 'AWS::DynamoDB::Table'
     Properties:
@@ -52,7 +52,7 @@ Resources:
       KeySchema:
         - AttributeName: id
           KeyType: HASH
-      ProvisionedThrouout:
+      ProvisionedThroughput:
         ReadCapacityUnits: '5'
         WriteCapacityUnits: '5'
     DependsOn:
@@ -81,7 +81,7 @@ Resources:
       RestApiId: !Ref APIGatewayRestAPI
       ResourceId: !Ref APIGatewayResource
       HttpMethod: POST
-      AuthorizationType: None
+      AuthorizationType: NONE
       MethodResponses:
         - StatusCode: 200
       Integration:
@@ -91,9 +91,8 @@ Resources:
         IntegrationHttpMethod: POST
         Uri: !Sub
           - >-
-            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/
-            ${LambdaFuncNameArn}/invocations
-          - LambdaFuncArn: !GetAttr LambdaFunction.Arn
+            arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaFuncNameArn}/invocations
+          - LambdaFuncNameArn: !GetAtt LambdaFunction.Arn
     DependsOn:
       - APIGatewayResource
   APIGatewayDeployment:
@@ -122,19 +121,19 @@ Resources:
             Principal:
               Service:
                 - lambda.amazonaws.com
-              Action:
-                - 'sts:AssumeRole'
+            Action:
+              - 'sts:AssumeRole'
       Path: /
       Policies:
         - PolicyName: Policy_api-lambda-db
           PolicyDocument:
-            Version: 2021-10-17
+            Version: 2012-10-17
             Statement:
               - Effect: Allow
                 Action:
                   - 'dynamodb:BatchGetItem'
                   - 'dynamodb:BatchWriteItem'
-                  - 'dynamodb:TagResouce'
+                  - 'dynamodb:TagResource'
                   - 'dynamodb:UntagResource'
                   - 'dynamodb:PutItem'
                   - 'dynamodb:DeleteItem'
@@ -152,7 +151,7 @@ Resources:
 Parameters:
   LambdaFuncName:
     Type: String
-    Default: Lambda_api_lambda-db
+    Default: Lambda_api-lambda-db
   DynamoDBTableName:
     Type: String
     Default: Dynamo_api-lambda-db
